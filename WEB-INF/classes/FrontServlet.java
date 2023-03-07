@@ -2,10 +2,23 @@ package etu2068.framework.servlet;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.*;
+import java.util.HashMap;
+import etu2068.framework.Mapping;
 
 
 
 public class FrontServlet extends HttpServlet{
+    HashMap<String, Mapping> mappingUrls;
+
+    public HashMap<String, Mapping> getMappingUrls() {
+        return this.mappingUrls;
+    }
+
+
+    public void setMappingUrls(HashMap<String, Mapping> mappingUrls) {
+        this.mappingUrls = mappingUrls;
+    }
+
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter out = response.getWriter();
