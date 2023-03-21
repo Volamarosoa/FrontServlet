@@ -14,7 +14,12 @@
       <servlet-name>FrontServlet</servlet-name>
       <url-pattern>/*</url-pattern>
     </servlet-mapping>
-    
+
+    <context-param>
+      <param-name>NomduPackage</param-name>
+  <!-- Remplacez models par le nom de votre package ou on prend tous les models que vous aviez creer et ne touche a rien SVP! -->
+      <param-value>models</param-value> 
+    </context-param>
     
 
    

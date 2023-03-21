@@ -1,4 +1,4 @@
-package personne;
+package models.personne;
 import dao.annotations.Colonne;
 import dao.annotations.Table;
 import dao.generiqueDAO.GeneriqueDAO;

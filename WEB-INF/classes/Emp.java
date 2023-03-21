@@ -1,4 +1,4 @@
-package employees;
+package models.employees;
 import dao.annotations.Colonne;
 import dao.annotations.Table;
 import dao.generiqueDAO.GeneriqueDAO;

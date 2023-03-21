@@ -14,6 +14,16 @@ import etu2068.framework.Mapping;
 import java.lang.ClassLoader;
 import java.util.Enumeration;
 import java.net.URL;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.Files;
+
+import java.io.File;
+import java.util.Iterator;
+import java.util.List;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+
+
 public class FrontServlet extends HttpServlet{
     HashMap<String, Mapping> mappingUrls;
 
@@ -22,11 +32,15 @@ public class FrontServlet extends HttpServlet{
             this.setMappingUrls(new HashMap<String,Mapping>());
             ClassLoader classLoader = new Thread().getContextClassLoader();
             Enumeration<URL> urls = classLoader.getResources("");
+
+        ///maka ny nom an'ilay package misy an'ilay models rehetra, alaina avy eo amin'ny web.xml    
+            String nomPackage = getServletContext().getInitParameter("NomduPackage");
+
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
                 File dir = new File(url.toURI());
                 for (File file : dir.listFiles()) {
-                    if (file.isDirectory()) {
+                    if (file.isDirectory() && file.getName().equals(nomPackage)) {
                         this.listePackage( file, file.getName());
                     }
                 }
@@ -52,18 +66,13 @@ public class FrontServlet extends HttpServlet{
         response.setContentType("text/plain");
         out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
         out.println("Method = " + request.getMethod().toString());
-
-        // for( Map.Entry<String, Mapping> sets : this.getMappingUrls().entrySet() ){
-        //     Mapping mapping = (Mapping)sets.getValue();
-        //     out.println("url====>" + sets.getKey() + "==== >>>> classe = " + mapping.getClassName());
-        //     out.println("url====>" + sets.getKey() + "==== >>>> method = " + mapping.getMethod());
-        // }
-
         out.println();
 
         Mapping mapping1 = (Mapping)this.getMappingUrls().get(request.getRequestURI().substring(request.getContextPath().length()));
-        out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> classe = " + mapping1.getClassName());
-        out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> method = " + mapping1.getMethod());
+        if(mapping1!=null){
+            out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> classe = " + mapping1.getClassName());
+            out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> method = " + mapping1.getMethod());
+        }
     }
 
     public void listePackage(File dossier, String packages) {
@@ -105,6 +114,7 @@ public class FrontServlet extends HttpServlet{
     
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter out = response.getWriter();
+        try{
         processRequest(request, response);
 //        1 - Maka ny parametre nalefa raha misy
 //        2 - controlle de valeur na instanciation objet raha ilaina
@@ -113,7 +123,10 @@ public class FrontServlet extends HttpServlet{
            
 
 //        4 - Redirection
-      
+           
+        } catch(Exception io) {
+            out.print(io.getMessage());
+        }
     }
 
 
@@ -128,5 +141,5 @@ public class FrontServlet extends HttpServlet{
         
         //        4 - Redirection
               
-            }
+    }
 }
