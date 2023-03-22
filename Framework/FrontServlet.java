@@ -2,7 +2,7 @@ package etu2068.framework.servlet;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import dao.annotations.Url;
+import etu2068.annotations.Url;
 
 import java.io.*;
 import java.lang.Thread;

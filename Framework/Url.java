@@ -1,4 +1,4 @@
-package dao.annotations;
+package etu2068.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

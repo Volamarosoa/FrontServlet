@@ -6,6 +6,7 @@ import connexionBase.ConnexionBase;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import etu2068.annotations.Url;
 
 
 public class GeneriqueDAO {
