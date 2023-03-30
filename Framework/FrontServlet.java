@@ -3,12 +3,14 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 
 import etu2068.annotations.Url;
+import etu2068.modelView.ModelView;
 
 import java.io.*;
 import java.lang.Thread;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 
 import etu2068.framework.Mapping;
 import java.lang.ClassLoader;
@@ -26,12 +28,14 @@ import org.jdom2.input.SAXBuilder;
 
 public class FrontServlet extends HttpServlet{
     HashMap<String, Mapping> mappingUrls;
+    Vector<Class<?>> listeClasse;
 
     public void init() {
         try{
             this.setMappingUrls(new HashMap<String,Mapping>());
             ClassLoader classLoader = new Thread().getContextClassLoader();
             Enumeration<URL> urls = classLoader.getResources("");
+            this.listeClasse = new Vector<Class<?>>();
 
         ///maka ny nom an'ilay package misy an'ilay models rehetra, alaina avy eo amin'ny web.xml    
             String nomPackage = getServletContext().getInitParameter("NomduPackage");
@@ -60,18 +64,47 @@ public class FrontServlet extends HttpServlet{
         this.mappingUrls = mappingUrls;
     }
 
+    public Vector<Class<?>> getListeClasse() {
+        return this.listeClasse;
+    }
+
+    public void setListeClasse(Vector<Class<?>> listeClasse) {
+        this.listeClasse = listeClasse;
+    }
+
+
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-        response.setContentType("text/plain");
-        out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
-        out.println("Method = " + request.getMethod().toString());
-        out.println();
-
-        Mapping mapping1 = (Mapping)this.getMappingUrls().get(request.getRequestURI().substring(request.getContextPath().length()));
-        if(mapping1!=null){
-            out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> classe = " + mapping1.getClassName());
-            out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> method = " + mapping1.getMethod());
+        try{
+            response.setContentType("text/plain");
+            out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
+            out.println("Method = " + request.getMethod().toString());
+            out.println();
+    
+            Mapping mapping1 = (Mapping)this.getMappingUrls().get(request.getRequestURI().substring(request.getContextPath().length()));
+            if(mapping1!=null){
+                out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> classe = " + mapping1.getClassName());
+                out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> method = " + mapping1.getMethod());
+                for (Class<?> class1 : this.getListeClasse()) {
+                    if(class1.getSimpleName().equals( mapping1.getClassName())) {
+                        out.println(class1.getSimpleName());
+                        Object object = class1.newInstance();
+                        Method[] methods = class1.getDeclaredMethods();
+                        for (Method method : methods) {
+                            if(method.getName().equals(mapping1.getMethod())) {
+                                out.println(method.getName());
+                                ModelView view = (ModelView)method.invoke(object);
+                                RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
+                                dispatcher.forward(request, response);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch(Exception io) {
+            out.println(io.getMessage());
         }
     }
 
@@ -99,14 +132,22 @@ public class FrontServlet extends HttpServlet{
         String name = fichier.getName();
         name = name.split(".class")[0];
         Class<?> classe = Class.forName( packages+"."+name);
-        if(classe.getSuperclass()!=null){
-            classe = classe.getSuperclass();
-        }
+        this.getListeClasse().add(classe);
         Method[] methods = classe.getDeclaredMethods();
         for (Method method : methods) {
             if(method.isAnnotationPresent(Url.class)){
                 Mapping mapping = new Mapping(name, method.getName());
                 this.getMappingUrls().put( "/"+name+""+method.getAnnotation(Url.class).name(), mapping);
+            }
+        }
+        if(classe.getSuperclass()!=null){
+            classe = classe.getSuperclass();
+            methods = classe.getDeclaredMethods();
+            for (Method method : methods) {
+                if(method.isAnnotationPresent(Url.class)){
+                    Mapping mapping = new Mapping(name, method.getName());
+                    this.getMappingUrls().put( "/"+name+""+method.getAnnotation(Url.class).name(), mapping);
+                }
             }
         }
     }
