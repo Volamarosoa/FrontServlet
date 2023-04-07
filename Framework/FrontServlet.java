@@ -95,6 +95,14 @@ public class FrontServlet extends HttpServlet{
                             if(method.getName().equals(mapping1.getMethod())) {
                                 out.println(method.getName());
                                 ModelView view = (ModelView)method.invoke(object);
+                                out.println("View = " + view.getView());
+                                if(view.getData()!=null) {
+                                    for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
+                                        String key = entry.getKey();
+                                        Object value = entry.getValue();
+                                        request.setAttribute(key, value);
+                                    }
+                                }
                                 RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
                                 dispatcher.forward(request, response);
                             }
@@ -104,7 +112,7 @@ public class FrontServlet extends HttpServlet{
             }
         }
         catch(Exception io) {
-            out.println(io.getMessage());
+            out.println("Erreur aki = " + io.getMessage());
         }
     }
 
