@@ -88,11 +88,8 @@ public class Compte extends GeneriqueDAO{
     @Url(name = "/page")
     public ModelView modelView() throws Exception {
         ModelView view = new ModelView("Compte.jsp");
-        List<Compte> liste = new ArrayList<Compte>();
-        liste.add(new Compte("10100", "Capital"));
-        liste.add(new Compte("512", "Banque BNI"));
-        liste.add(new Compte("53", "Caisse"));
-        view.addItem("liste", (Object)liste);
+        List<Compte> liste = (List<Compte>)new Compte().list(null);
+        view.addItem("liste", liste);
         return view;
     }
 }

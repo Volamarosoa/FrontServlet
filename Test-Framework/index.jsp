@@ -7,10 +7,11 @@
     <title>Formulaire</title>
 </head>
 <body>
-    <form action="front.todo" method="POST">
+    <form action="Emp/save" method="POST">
+        <h3>Ajout d'un Nouveau Employe</h3>
         <p>Nom: <input type="text" name="nom"></p>
         <p>Prenom: <input type="text" name="prenom"></p>
-        <p>Date: <input type="date" name="date"></p>
+        <p>Numero: <input type="number" name="numero"></p>
         <input type="submit" value="Valider">
     </form>
 </body>

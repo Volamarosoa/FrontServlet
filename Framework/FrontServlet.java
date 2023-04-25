@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.lang.reflect.Field;
 
 import etu2068.framework.Mapping;
 import java.lang.ClassLoader;
@@ -81,15 +82,40 @@ public class FrontServlet extends HttpServlet{
             out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
             out.println("Method = " + request.getMethod().toString());
             out.println();
-    
             Mapping mapping1 = (Mapping)this.getMappingUrls().get(request.getRequestURI().substring(request.getContextPath().length()));
             if(mapping1!=null){
                 out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> classe = " + mapping1.getClassName());
                 out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> method = " + mapping1.getMethod());
                 for (Class<?> class1 : this.getListeClasse()) {
-                    if(class1.getSimpleName().equals( mapping1.getClassName())) {
+                    if(class1.getSimpleName().equals(mapping1.getClassName())) {
                         out.println(class1.getSimpleName());
                         Object object = class1.newInstance();
+                        Map<String, String[]> params = request.getParameterMap();
+                        if(params.isEmpty()==false) {
+                        for (String paramName : params.keySet()) {
+                            String[] values = params.get(paramName);
+                            Object reponse = null;
+                            if(values!=null && values.length == 1){
+                                reponse = (Object)values[0];
+                                Field champ = class1.getDeclaredField(paramName);
+                                if(champ!=null) {
+                                    String nomMethode =  "set" + this.changeFirstAName(paramName);
+                                    Method setter = class1.getDeclaredMethod(nomMethode, String.class);
+                                    setter.invoke(object, values[0]); 
+                                }
+                            } 
+                            
+                            // else if(values!=null && values.length > 1) {
+                            //     reponse = (Object)values;
+                            //     Field champ = class1.getDeclaredField(paramName);
+                            //     if(champ!=null) {
+                            //         String nomMethode = "set" + this.changeFirstAName(paramName);
+                            //         Method setter = class1.getDeclaredMethod(nomMethode, String[].class);
+                            //         setter.invoke(object, reponse); 
+                            //     }
+                            // }     
+                        }
+                        }
                         Method[] methods = class1.getDeclaredMethods();
                         for (Method method : methods) {
                             if(method.getName().equals(mapping1.getMethod())) {
@@ -113,6 +139,7 @@ public class FrontServlet extends HttpServlet{
         }
         catch(Exception io) {
             out.println("Erreur aki = " + io.getMessage());
+            io.printStackTrace();
         }
     }
 
@@ -159,6 +186,10 @@ public class FrontServlet extends HttpServlet{
             }
         }
     }
+
+    public String changeFirstAName(String nom){
+		return nom.substring(0,1).toUpperCase() + nom.substring(1);
+	}
     
     
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

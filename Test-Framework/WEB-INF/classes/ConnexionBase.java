@@ -43,7 +43,7 @@ public class ConnexionBase {
         if(this.getConnection()==null){
                 try{
 
-                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/entreprise",this.getUtilisateur(),this.getPassword());
+                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/servlet",this.getUtilisateur(),this.getPassword());
                     this.setConnection(conn);
                 }
                 catch(Exception io){
