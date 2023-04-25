@@ -12,6 +12,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import java.lang.reflect.Field;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
 import etu2068.framework.Mapping;
 import java.lang.ClassLoader;
@@ -91,31 +95,7 @@ public class FrontServlet extends HttpServlet{
                         out.println(class1.getSimpleName());
                         Object object = class1.newInstance();
                         Map<String, String[]> params = request.getParameterMap();
-                        if(params.isEmpty()==false) {
-                        for (String paramName : params.keySet()) {
-                            String[] values = params.get(paramName);
-                            Object reponse = null;
-                            if(values!=null && values.length == 1){
-                                reponse = (Object)values[0];
-                                Field champ = class1.getDeclaredField(paramName);
-                                if(champ!=null) {
-                                    String nomMethode =  "set" + this.changeFirstAName(paramName);
-                                    Method setter = class1.getDeclaredMethod(nomMethode, String.class);
-                                    setter.invoke(object, values[0]); 
-                                }
-                            } 
-                            
-                            // else if(values!=null && values.length > 1) {
-                            //     reponse = (Object)values;
-                            //     Field champ = class1.getDeclaredField(paramName);
-                            //     if(champ!=null) {
-                            //         String nomMethode = "set" + this.changeFirstAName(paramName);
-                            //         Method setter = class1.getDeclaredMethod(nomMethode, String[].class);
-                            //         setter.invoke(object, reponse); 
-                            //     }
-                            // }     
-                        }
-                        }
+                        object = this.makaParametreDonnees(object, params, class1); //maka an'ilay parametre avy any @ JSP
                         Method[] methods = class1.getDeclaredMethods();
                         for (Method method : methods) {
                             if(method.getName().equals(mapping1.getMethod())) {
@@ -190,6 +170,81 @@ public class FrontServlet extends HttpServlet{
     public String changeFirstAName(String nom){
 		return nom.substring(0,1).toUpperCase() + nom.substring(1);
 	}
+
+    public Object makaParametreDonnees(Object object, Map<String, String[]> params, Class<?> class1) throws Exception{
+        if(params.isEmpty()==false) {
+            for (String paramName : params.keySet()) {
+                String[] values = params.get(paramName);
+                Object reponse = null;
+                if(values!=null && values.length == 1){
+                    reponse = (Object)values[0];
+                    Field champ = class1.getDeclaredField(paramName);
+                    if(champ!=null) {
+                        String nomMethode =  "set" + this.changeFirstAName(paramName);
+                        Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
+                        reponse = castValue(champ.getType(), values[0]);
+                        setter.invoke(object, reponse); 
+                    }
+                } 
+                
+                else if(values!=null && values.length > 1) {
+                    reponse = (Object)values;
+                    Field champ = class1.getDeclaredField(paramName);
+                    if(champ!=null) {
+                        String nomMethode =  "set" + this.changeFirstAName(paramName);
+                        Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
+                        reponse = liste(champ.getType(), values);
+                        setter.invoke(object, reponse); 
+                    }
+                }     
+            }
+        }
+        return object;
+    }
+
+    public Object castValue(Class<?> type, String value) throws Exception{
+        if (type == String.class) {
+            return value;
+        } else if (type == Integer.class || type == int.class) {
+            return Integer.parseInt(value);
+        } else if (type == Double.class || type == double.class) {
+            return Double.parseDouble(value);
+        } else if (type == Boolean.class || type == boolean.class) {
+            return Boolean.parseBoolean(value);
+        } else if (type == Long.class || type == long.class) {
+            return Long.parseLong(value);
+        } else if (type.toString() == "java.sql.Date") {
+            return java.sql.Date.valueOf(value);
+        }else if (type == Timestamp.class) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            return new java.sql.Timestamp(formatter.parse(value).getTime());
+        }else if(type == Time.class) {
+            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+            return new java.sql.Time(formatter.parse(value).getTime());
+        }else {
+            return null;
+        }
+    }
+
+    public Object liste(Class<?> type, String[] value){
+        if (type == Integer.class || type == int.class) {
+            int[] liste = new int[value.length];
+            for(int i=0; i<value.length; i++) {
+                liste[i] = Integer.parseInt(value[i]);
+            }
+            return liste;
+        }
+        else if (type == Double.class || type == double.class) {
+            double[] liste = new double[value.length];
+            for(int i=0; i<value.length; i++) {
+                liste[i] = Double.parseDouble(value[i]);
+            }
+            return liste;
+        }
+        else {
+            return null;
+        }
+    }
     
     
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
