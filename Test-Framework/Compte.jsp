@@ -1,7 +1,7 @@
 <%@page import="models.compte.Compte, java.util.List" %>
 <%
     List<Compte> liste = (List<Compte>)request.getAttribute("liste");
-    out.println(liste.size());
+    out.println("addition = " + ((int)request.getAttribute("addition")));
 %>
 <!DOCTYPE html>
 <html lang="en">

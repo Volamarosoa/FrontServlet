@@ -4,6 +4,7 @@ import dao.annotations.Table;
 import dao.generiqueDAO.GeneriqueDAO;
 import etu2068.modelView.ModelView;
 import etu2068.annotations.Url;
+import etu2068.annotations.Argument;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,10 +87,11 @@ public class Compte extends GeneriqueDAO{
     }
 
     @Url(name = "/page")
-    public ModelView modelView() throws Exception {
+    public ModelView modelView(@Argument(name = "a") int a,@Argument(name = "b") int b) throws Exception {
         ModelView view = new ModelView("Compte.jsp");
         List<Compte> liste = (List<Compte>)new Compte().list(null);
         view.addItem("liste", liste);
+        view.addItem("addition", (a+b));
         return view;
     }
 }

@@ -3,11 +3,13 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 
 import etu2068.annotations.Url;
+import etu2068.annotations.Argument;
 import etu2068.modelView.ModelView;
 
 import java.io.*;
 import java.lang.Thread;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -100,7 +102,14 @@ public class FrontServlet extends HttpServlet{
                         for (Method method : methods) {
                             if(method.getName().equals(mapping1.getMethod())) {
                                 out.println(method.getName());
-                                ModelView view = (ModelView)method.invoke(object);
+                                Object[] argument = this.mamenoParametreMethode(method, params);    //mameno parametre an'ilay fonction
+                                ModelView view = null;
+                                if(argument != null){
+                                    view = (ModelView)method.invoke(object, argument);
+                                }
+                                else{
+                                    view = (ModelView)method.invoke(object);
+                                }
                                 out.println("View = " + view.getView());
                                 if(view.getData()!=null) {
                                     for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
@@ -118,7 +127,7 @@ public class FrontServlet extends HttpServlet{
             }
         }
         catch(Exception io) {
-            out.println("Erreur aki = " + io.getMessage());
+            out.println("Erreur aki = " + io);
             io.printStackTrace();
         }
     }
@@ -170,36 +179,67 @@ public class FrontServlet extends HttpServlet{
     public String changeFirstAName(String nom){
 		return nom.substring(0,1).toUpperCase() + nom.substring(1);
 	}
-
-    public Object makaParametreDonnees(Object object, Map<String, String[]> params, Class<?> class1) throws Exception{
+// ty le fonction manome ny valinle argument
+    public Object makaParametreDonnees(Object object, Map<String, String[]> params, Class<?> class1){
+        PrintWriter out = new PrintWriter(System.out);
         if(params.isEmpty()==false) {
             for (String paramName : params.keySet()) {
                 String[] values = params.get(paramName);
                 Object reponse = null;
                 if(values!=null && values.length == 1){
                     reponse = (Object)values[0];
-                    Field champ = class1.getDeclaredField(paramName);
-                    if(champ!=null) {
+                    try{
+                        Field champ = class1.getDeclaredField(paramName);
                         String nomMethode =  "set" + this.changeFirstAName(paramName);
                         Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
-                        reponse = castValue(champ.getType(), values[0]);
+                        reponse = castValue(champ.getType(), values[0]);    //micaste anle valiny io fonction io
                         setter.invoke(object, reponse); 
                     }
+                    catch(Exception io){}
                 } 
                 
                 else if(values!=null && values.length > 1) {
                     reponse = (Object)values;
-                    Field champ = class1.getDeclaredField(paramName);
-                    if(champ!=null) {
+                    try{
+                        Field champ = class1.getDeclaredField(paramName);
                         String nomMethode =  "set" + this.changeFirstAName(paramName);
                         Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
                         reponse = liste(champ.getType(), values);
                         setter.invoke(object, reponse); 
                     }
+                    catch(Exception io) {}
                 }     
             }
         }
         return object;
+    }
+
+    public Object[] mamenoParametreMethode(Method method, Map<String, String[]> params) throws Exception{
+        Object[] arguments = null;
+        if(params.isEmpty()==false){
+            Parameter[] parameters = method.getParameters();
+            if(parameters.length != 0) {
+                arguments = new Object[parameters.length];
+                int i = 0;
+                for (Parameter parameter : parameters) {
+                    for (String paramName : params.keySet()) {
+                        if(paramName.equals(parameter.getAnnotation(Argument.class).name())) {
+                            String[] values = params.get(paramName);
+                            Object reponse = null;
+                            if(values!=null && values.length == 1){
+                                arguments[i] = castValue(parameter.getType(), values[0]);
+                            } 
+                            
+                            else if(values!=null && values.length > 1) {
+                                arguments[i] = liste(parameter.getType(), values);
+                            }  
+                        }   
+                    }
+                    i++;
+                }     
+            }
+        }
+        return arguments;
     }
 
     public Object castValue(Class<?> type, String value) throws Exception{
@@ -227,7 +267,10 @@ public class FrontServlet extends HttpServlet{
     }
 
     public Object liste(Class<?> type, String[] value){
-        if (type == Integer.class || type == int.class) {
+        if (type == String.class) {
+            return value;
+        }
+        else if (type == Integer.class || type == int.class) {
             int[] liste = new int[value.length];
             for(int i=0; i<value.length; i++) {
                 liste[i] = Integer.parseInt(value[i]);
