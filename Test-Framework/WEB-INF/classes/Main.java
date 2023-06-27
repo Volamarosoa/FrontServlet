@@ -17,18 +17,27 @@ import etu2068.modelView.ModelView;
 public class Main {
     public static void main(String[] args) {
         try{
-            Compte comp = new Compte();
-            System.out.println("Boumm");
-            Method[] methods = comp.getClass().getDeclaredMethods();
-            for (Method method : methods) {
-                if(method.getName().equals("modelView")) {
-                    Parameter[] parameters = method.getParameters();
-                    System.out.println(parameters.length);
-                    for (Parameter parameter : parameters) {
-                        System.out.println(parameter.getAnnotation(Argument.class).name() + " Type : " + parameter.getType().getName());
-                    }
-                }
-            }
+            // Compte comp = new Compte();
+            // System.out.println("Boumm");
+            // Method[] methods = comp.getClass().getDeclaredMethods();
+            // for (Method method : methods) {
+            //     if(method.getName().equals("modelView")) {
+            //         Parameter[] parameters = method.getParameters();
+            //         System.out.println(parameters.length);
+            //         for (Parameter parameter : parameters) {
+            //             System.out.println(parameter.getAnnotation(Argument.class).name() + " Type : " + parameter.getType().getName());
+            //         }
+            //     }
+            // }
+
+            Emp emp = new Emp();
+            emp.setFichier( emp.readFileToBytes("fichier/f.txt"));
+            ModelView view = emp.enregistrer();
+            // for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
+            //     String key = entry.getKey();
+            //     System.out.println("io " + (List<String>)entry.getValue());
+             
+            // }
         }
         catch(Exception io) {
             System.out.println(io.getMessage());

@@ -13,6 +13,7 @@ import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.ArrayList;
 import java.lang.reflect.Field;
 import java.sql.Date;
 import java.sql.Time;
@@ -21,6 +22,7 @@ import java.text.SimpleDateFormat;
 
 import etu2068.framework.Mapping;
 import java.lang.ClassLoader;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.net.URL;
 import java.nio.file.StandardCopyOption;
@@ -32,7 +34,12 @@ import java.util.List;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 
+import javax.servlet.annotation.MultipartConfig;
+import java.nio.charset.StandardCharsets;
+import java.lang.reflect.InvocationTargetException;
 
+
+@MultipartConfig
 public class FrontServlet extends HttpServlet{
     HashMap<String, Mapping> mappingUrls;
     Vector<Class<?>> listeClasse;
@@ -79,10 +86,58 @@ public class FrontServlet extends HttpServlet{
         this.listeClasse = listeClasse;
     }
 
+    //test si c'est un fichier
+    private boolean isFilePart(Part part) {
+        String disposition = part.getHeader("content-disposition");
+        return (disposition != null && disposition.contains("filename"));
+    }
 
+    //retourne les valeurs de ce qui ne sont pas un fichier
+    private String[] readValueFromPart(Part part) throws IOException {
+        InputStream partContent = part.getInputStream();
+        InputStreamReader reader = new InputStreamReader(partContent, StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        List<String> lines = new ArrayList<>();
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            lines.add(line);
+        }
+        return lines.toArray(new String[0]);
+    }
+    
+
+    //retourne les valeurs en byte de ce qui sont fichier
+    private byte[] readBytesFromPart(Part part) throws IOException {
+        InputStream partContent = part.getInputStream();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = partContent.read(buffer)) != -1) {
+            output.write(buffer, 0, length);
+        }
+        return output.toByteArray();
+    }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter out = response.getWriter();
+        String contentType = request.getContentType();
+        // if (contentType != null && contentType.startsWith("multipart/")) {
+        //     Collection<Part> parts = request.getParts();     
+        //     for(Part part : parts) {
+        //         if(isFilePart(part)) {
+        //             String partName = part.getName();
+        //             byte[] fileBytes = readBytesFromPart(part);
+        //             String str = new String(fileBytes, StandardCharsets.UTF_8);
+        //             out.println(str);
+        //         }else{
+        //             Object reponse = null;
+        //             String partName = part.getName();
+        //             String[] partValue = readValueFromPart(part);
+        //             out.println("Io ary = " + partValue[0]);
+        //         }
+        //     }
+        // }
+       
         try{
             response.setContentType("text/plain");
             out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
@@ -97,27 +152,42 @@ public class FrontServlet extends HttpServlet{
                         out.println(class1.getSimpleName());
                         Object object = class1.newInstance();
                         Map<String, String[]> params = request.getParameterMap();
-                        object = this.makaParametreDonnees(object, params, class1); //maka an'ilay parametre avy any @ JSP
+                        if (contentType != null && contentType.startsWith("multipart/")) {
+                            this.makaParametreDonneesAvecFichier(object, request, class1, out); //maka an'ilay parametre setters any jsp fa avec setters
+                        } else {
+                            object = this.makaParametreDonnees(object, params, class1); //maka an'ilay parametre setters any jsp
+                        }
                         Method[] methods = class1.getDeclaredMethods();
                         for (Method method : methods) {
                             if(method.getName().equals(mapping1.getMethod())) {
-                                out.println(method.getName());
-                                Object[] argument = this.mamenoParametreMethode(method, params);    //mameno parametre an'ilay fonction
+                                Object[] argument = this.mamenoParametreMethode(method, params);    //mameno parametre an'ilay fonction                                 
                                 ModelView view = null;
+                                try {
                                 if(argument != null){
                                     view = (ModelView)method.invoke(object, argument);
                                 }
                                 else{
                                     view = (ModelView)method.invoke(object);
                                 }
+                                // Code où l'exception InvocationTargetException se produit
+                                } catch (InvocationTargetException e) {
+                                    Throwable cause = e.getCause();
+                                    if (cause != null) {
+                                        // Gérez ou affichez l'exception réelle
+                                        cause.printStackTrace();
+                                    }
+                                }
+                                
                                 out.println("View = " + view.getView());
                                 if(view.getData()!=null) {
+                                    out.println("Manondrana");
                                     for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
                                         String key = entry.getKey();
                                         Object value = entry.getValue();
                                         request.setAttribute(key, value);
                                     }
                                 }
+
                                 RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
                                 dispatcher.forward(request, response);
                             }
@@ -179,7 +249,7 @@ public class FrontServlet extends HttpServlet{
     public String changeFirstAName(String nom){
 		return nom.substring(0,1).toUpperCase() + nom.substring(1);
 	}
-// ty le fonction manome ny valinle argument
+// ty le fonction manao setters anle objet 
     public Object makaParametreDonnees(Object object, Map<String, String[]> params, Class<?> class1){
         PrintWriter out = new PrintWriter(System.out);
         if(params.isEmpty()==false) {
@@ -195,7 +265,9 @@ public class FrontServlet extends HttpServlet{
                         reponse = castValue(champ.getType(), values[0]);    //micaste anle valiny io fonction io
                         setter.invoke(object, reponse); 
                     }
-                    catch(Exception io){}
+                    catch(Exception io){
+                        io.printStackTrace();
+                    }
                 } 
                 
                 else if(values!=null && values.length > 1) {
@@ -207,11 +279,67 @@ public class FrontServlet extends HttpServlet{
                         reponse = liste(champ.getType(), values);
                         setter.invoke(object, reponse); 
                     }
-                    catch(Exception io) {}
+                    catch(Exception io) {
+                        io.printStackTrace();
+                    }
                 }     
             }
         }
         return object;
+    }
+
+// ty le fonction manao setters anle objet avec un fichier
+    private Object makaParametreDonneesAvecFichier(Object objet, HttpServletRequest request, Class<?> class1, PrintWriter out) throws IOException{
+        try{
+            Collection<Part> parts = request.getParts();     
+            for(Part part : parts) {
+                if(isFilePart(part)) {
+                    String partName = part.getName();
+                    out.println("fichier: " + partName);
+                    byte[] fileBytes = readBytesFromPart(part);
+                    Field champ = class1.getDeclaredField(partName);
+                    String nomMethode =  "set" + this.changeFirstAName(partName);
+                    Method setter = class1.getDeclaredMethod(nomMethode, byte[].class);
+                    setter.invoke(objet, fileBytes); 
+                    out.println("eto aloha " + nomMethode + " type = " + champ.getType());
+                }else{
+                    Object reponse = null;
+                    String partName = part.getName();
+                    out.println("simple: " + partName);
+                    String[] partValue = readValueFromPart(part);
+                    if(partValue!=null && partValue.length == 1){
+                        try{
+                            Field champ = class1.getDeclaredField(partName);
+                            String nomMethode =  "set" + this.changeFirstAName(partName);
+                            Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
+                            reponse = castValue(champ.getType(), partValue[0]);    //micaste anle valiny io fonction io
+                            setter.invoke(objet, reponse); 
+                        }
+                        catch(Exception io){
+                            io.printStackTrace();
+                        }
+                    } 
+                    
+                    else if(partValue!=null && partValue.length > 1) {
+                        try{
+                            Field champ = class1.getDeclaredField(partName);
+                            String nomMethode =  "set" + this.changeFirstAName(partName);
+                            Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
+                            reponse = liste(champ.getType(), partValue);
+                            setter.invoke(objet, reponse); 
+                        }
+                        catch(Exception io) {
+                            io.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+        catch(Exception io) {
+            io.printStackTrace();
+            out.println(io.getMessage());
+        }
+        return objet;
     }
 
     public Object[] mamenoParametreMethode(Method method, Map<String, String[]> params) throws Exception{

@@ -20,6 +20,14 @@
   <!-- Remplacez models par le nom de votre package ou on prend tous les models que vous aviez creer et ne touche a rien SVP! -->
       <param-value>models</param-value> 
     </context-param>
+
+    <multipart-config>
+        <max-file-size>5242880</max-file-size> <!-- Taille maximale du fichier (en octets) -->
+        <max-request-size>20971520</max-request-size> <!-- Taille maximale totale de la requête (en octets) -->
+        <file-size-threshold>0</file-size-threshold> <!-- Seuil de taille du fichier pour écriture directe sur le disque (0 pour toujours écrire en mémoire) -->
+    </multipart-config>
+
+
     
 
    
