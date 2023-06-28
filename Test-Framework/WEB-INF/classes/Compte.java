@@ -2,12 +2,16 @@ package models.compte;
 import dao.annotations.Colonne;
 import dao.annotations.Table;
 import dao.generiqueDAO.GeneriqueDAO;
+
 import etu2068.modelView.ModelView;
 import etu2068.annotations.Url;
 import etu2068.annotations.Argument;
+import etu2068.annotations.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 @Table
 public class Compte extends GeneriqueDAO{
     @Colonne
@@ -84,6 +88,14 @@ public class Compte extends GeneriqueDAO{
 
     public void setExist(String exist) {
         this.setExist(exist);
+    }
+
+    public void reinitialiser() {
+        this.id = -1;
+        this.idEntreprise = -1;
+        this.numero = -1;
+        this.intitule = "";
+        this.exist = -1;
     }
 
     @Url(name = "/page")

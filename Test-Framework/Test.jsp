@@ -1,3 +1,6 @@
+<%
+    out.println(request.getAttribute("nom"));
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>

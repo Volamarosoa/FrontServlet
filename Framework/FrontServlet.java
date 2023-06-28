@@ -4,6 +4,7 @@ import javax.servlet.http.*;
 
 import etu2068.annotations.Url;
 import etu2068.annotations.Argument;
+import etu2068.annotations.Singleton;
 import etu2068.modelView.ModelView;
 
 import java.io.*;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import java.util.ArrayList;
+import java.util.Set;
 import java.lang.reflect.Field;
 import java.sql.Date;
 import java.sql.Time;
@@ -43,6 +45,7 @@ import java.lang.reflect.InvocationTargetException;
 public class FrontServlet extends HttpServlet{
     HashMap<String, Mapping> mappingUrls;
     Vector<Class<?>> listeClasse;
+    HashMap<String, Object> instances;
 
     public void init() {
         try{
@@ -50,6 +53,7 @@ public class FrontServlet extends HttpServlet{
             ClassLoader classLoader = new Thread().getContextClassLoader();
             Enumeration<URL> urls = classLoader.getResources("");
             this.listeClasse = new Vector<Class<?>>();
+            this.instances = new HashMap<String, Object>();
 
         ///maka ny nom an'ilay package misy an'ilay models rehetra, alaina avy eo amin'ny web.xml    
             String nomPackage = getServletContext().getInitParameter("NomduPackage");
@@ -86,6 +90,19 @@ public class FrontServlet extends HttpServlet{
         this.listeClasse = listeClasse;
     }
 
+
+    public HashMap<String, Object> getInstances() {
+        return this.instances;
+    }
+
+    public void setInstances(HashMap<String, Object> instances) {
+        this.instances = instances;
+    }
+
+    public void addInstance(String key, Object value) {
+        this.getInstances().put(key, value);
+    }
+
     //test si c'est un fichier
     private boolean isFilePart(Part part) {
         String disposition = part.getHeader("content-disposition");
@@ -118,31 +135,36 @@ public class FrontServlet extends HttpServlet{
         return output.toByteArray();
     }
 
+    public void resetFieldToNull(Object object) throws Exception {
+        String reinitialiser = getServletContext().getInitParameter("reinitialiser");
+        Class<?> objectClass = object.getClass();
+        Method[] methods = objectClass.getDeclaredMethods();
+        for(Method method : methods) {
+            if(method.getName().equals(reinitialiser)) {
+                method.invoke(object);
+            }
+        }
+    }
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter out = response.getWriter();
         String contentType = request.getContentType();
-        // if (contentType != null && contentType.startsWith("multipart/")) {
-        //     Collection<Part> parts = request.getParts();     
-        //     for(Part part : parts) {
-        //         if(isFilePart(part)) {
-        //             String partName = part.getName();
-        //             byte[] fileBytes = readBytesFromPart(part);
-        //             String str = new String(fileBytes, StandardCharsets.UTF_8);
-        //             out.println(str);
-        //         }else{
-        //             Object reponse = null;
-        //             String partName = part.getName();
-        //             String[] partValue = readValueFromPart(part);
-        //             out.println("Io ary = " + partValue[0]);
-        //         }
-        //     }
-        // }
-       
         try{
             response.setContentType("text/plain");
             out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
             out.println("Method = " + request.getMethod().toString());
             out.println();
+            for(int i = 0; i < this.getListeClasse().size(); i++) {
+                if(this.getListeClasse().get(i).isAnnotationPresent(Singleton.class)) {
+                    out.println("class: " + this.getListeClasse().get(i).getSimpleName());
+                }   
+                else{
+                    out.println("tisy: " + this.getListeClasse().get(i).getSimpleName());
+                }
+            }
+
+            out.println("taille: " + this.getInstances().size());
+
             Mapping mapping1 = (Mapping)this.getMappingUrls().get(request.getRequestURI().substring(request.getContextPath().length()));
             if(mapping1!=null){
                 out.println("url====>" + request.getRequestURI().substring(request.getContextPath().length()) + "==== >>>> classe = " + mapping1.getClassName());
@@ -150,7 +172,22 @@ public class FrontServlet extends HttpServlet{
                 for (Class<?> class1 : this.getListeClasse()) {
                     if(class1.getSimpleName().equals(mapping1.getClassName())) {
                         out.println(class1.getSimpleName());
-                        Object object = class1.newInstance();
+                        Object object = null;
+                        if(this.getInstances().containsKey(class1.getSimpleName())) {
+                            object = this.getInstances().get(class1.getSimpleName());
+                            if(object == null) {
+                                out.println("mbola tsisy");
+                                object = class1.newInstance();
+                                this.getInstances().replace(class1.getSimpleName(), object);
+                            }
+                            else {
+                                this.resetFieldToNull(object);
+                            }
+                        }
+                        else{
+                            out.println("misy ve? tsisy");
+                            object = class1.newInstance();
+                        }
                         Map<String, String[]> params = request.getParameterMap();
                         if (contentType != null && contentType.startsWith("multipart/")) {
                             this.makaParametreDonneesAvecFichier(object, request, class1, out); //maka an'ilay parametre setters any jsp fa avec setters
@@ -180,7 +217,6 @@ public class FrontServlet extends HttpServlet{
                                 
                                 out.println("View = " + view.getView());
                                 if(view.getData()!=null) {
-                                    out.println("Manondrana");
                                     for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
                                         String key = entry.getKey();
                                         Object value = entry.getValue();
@@ -215,28 +251,32 @@ public class FrontServlet extends HttpServlet{
                 }
                 packages = packageName;
             }
-
-
+            
+            
         } catch(Exception io){
             io.printStackTrace();
         }
     }
-
+    
     public void getClass(File fichier, String packages) throws Exception {
         String name = fichier.getName();
         name = name.split(".class")[0];
-        Class<?> classe = Class.forName( packages+"."+name);
+        Class<?> classe = Class.forName( packages + "." + name );
         this.getListeClasse().add(classe);
-        Method[] methods = classe.getDeclaredMethods();
-        for (Method method : methods) {
-            if(method.isAnnotationPresent(Url.class)){
-                Mapping mapping = new Mapping(name, method.getName());
+
+    //prends tous les noms des methodes ou il y a des annotation URL    
+        
+    Method[] methods = classe.getDeclaredMethods();
+    for (Method method : methods) {
+        if(method.isAnnotationPresent(Url.class)){
+            Mapping mapping = new Mapping(name, method.getName());
                 this.getMappingUrls().put( "/"+name+""+method.getAnnotation(Url.class).name(), mapping);
             }
         }
-        if(classe.getSuperclass()!=null){
-            classe = classe.getSuperclass();
-            methods = classe.getDeclaredMethods();
+        
+        if(classe.getSuperclass() != null){
+            Class<?> c = classe.getSuperclass();
+            methods = c.getDeclaredMethods();
             for (Method method : methods) {
                 if(method.isAnnotationPresent(Url.class)){
                     Mapping mapping = new Mapping(name, method.getName());
@@ -244,11 +284,17 @@ public class FrontServlet extends HttpServlet{
                 }
             }
         }
+        
+        if( classe.isAnnotationPresent(Singleton.class) ) {
+            this.getInstances().put(name, null);
+        }    
+
     }
 
     public String changeFirstAName(String nom){
 		return nom.substring(0,1).toUpperCase() + nom.substring(1);
 	}
+
 // ty le fonction manao setters anle objet 
     public Object makaParametreDonnees(Object object, Map<String, String[]> params, Class<?> class1){
         PrintWriter out = new PrintWriter(System.out);

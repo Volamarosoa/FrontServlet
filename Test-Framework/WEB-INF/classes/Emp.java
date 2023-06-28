@@ -2,9 +2,12 @@ package models.employees;
 import dao.annotations.Colonne;
 import dao.annotations.Table;
 import dao.generiqueDAO.GeneriqueDAO;
+
 import etu2068.annotations.Url;
+import etu2068.annotations.Singleton;
 import etu2068.modelView.ModelView;
 import etu2068.fileUpload.FileUpload;
+
 import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,7 +19,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 
-
+@Singleton
 @Table
 public class Emp extends GeneriqueDAO{
     @Colonne
@@ -28,7 +31,6 @@ public class Emp extends GeneriqueDAO{
     @Colonne
     int numero = -1;
     FileUpload fichier;
-    String anatiny;
     
     
     public Emp() {}
@@ -91,6 +93,14 @@ public class Emp extends GeneriqueDAO{
         this.fichier = new FileUpload(fichier);
     }
 
+    public void reinitialiser() throws Exception {
+        this.id = -1;
+        this.nom = "";
+        this.prenom = "";
+        this.numero = -1;
+        this.fichier = null;
+    }
+
     @Url(name = "/save")
     public ModelView save() throws Exception {
         this.insert(null);
@@ -109,6 +119,18 @@ public class Emp extends GeneriqueDAO{
         List<Emp> liste1 = (List<Emp>)new Emp().list(null);
         view.addItem("fichier", lignes);
 
+        return view;
+    }
+
+    @Url(name = "/singleton")
+    public ModelView singleton() throws Exception {
+        ModelView view = new ModelView("Test.jsp");
+        view.addItem("id", this.numero);
+        view.addItem("nom", this.nom);
+        view.addItem("prenom", this.prenom);
+        System.out.println("numero = "+ this.numero);
+        System.out.println("nom = "+ this.nom);
+        System.out.println("prenom = "+ this.prenom);
         return view;
     }
 
