@@ -1,6 +1,7 @@
 <%
-    out.println(request.getAttribute("nom"));
-    String nom = (String)session.getAttribute("Rota");
+    out.println(request.getAttribute("e-mail"));
+    out.println(request.getAttribute("pwd"));
+    String profil = (String)session.getAttribute("profil");
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,10 +9,10 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test - Page</title>
+    <title>Accueil</title>
 </head>
 <body>
-    <h3>PAGE DE TEST, Bienvenu</h3>
-    <p>Session: <%= nom %></p>
+    <h3>Welcome</h3>
+    <p>Profil: <%= profil %></p>
 </body>
 </html>

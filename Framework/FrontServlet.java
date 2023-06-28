@@ -5,6 +5,7 @@ import javax.servlet.http.*;
 import etu2068.annotations.Url;
 import etu2068.annotations.Argument;
 import etu2068.annotations.Singleton;
+import etu2068.annotations.Auth;
 import etu2068.modelView.ModelView;
 
 import java.io.*;
@@ -154,16 +155,6 @@ public class FrontServlet extends HttpServlet{
             out.println("URL = " + request.getRequestURI().substring(request.getContextPath().length()));
             out.println("Method = " + request.getMethod().toString());
             out.println();
-            for(int i = 0; i < this.getListeClasse().size(); i++) {
-                if(this.getListeClasse().get(i).isAnnotationPresent(Singleton.class)) {
-                    out.println("class: " + this.getListeClasse().get(i).getSimpleName());
-                }   
-                else{
-                    out.println("tisy: " + this.getListeClasse().get(i).getSimpleName());
-                }
-            }
-
-            out.println("taille: " + this.getInstances().size());
 
             Mapping mapping1 = (Mapping)this.getMappingUrls().get(request.getRequestURI().substring(request.getContextPath().length()));
             if(mapping1!=null){
@@ -176,7 +167,6 @@ public class FrontServlet extends HttpServlet{
                         if(this.getInstances().containsKey(class1.getSimpleName())) {
                             object = this.getInstances().get(class1.getSimpleName());
                             if(object == null) {
-                                out.println("mbola tsisy");
                                 object = class1.newInstance();
                                 this.getInstances().replace(class1.getSimpleName(), object);
                             }
@@ -185,7 +175,6 @@ public class FrontServlet extends HttpServlet{
                             }
                         }
                         else{
-                            out.println("misy ve? tsisy");
                             object = class1.newInstance();
                         }
                         Map<String, String[]> params = request.getParameterMap();
@@ -197,6 +186,9 @@ public class FrontServlet extends HttpServlet{
                         Method[] methods = class1.getDeclaredMethods();
                         for (Method method : methods) {
                             if(method.getName().equals(mapping1.getMethod())) {
+                                //test si le methode a l'annotation Auth
+                                this.checkMethod(method, request);
+
                                 Object[] argument = this.mamenoParametreMethode(method, params);    //mameno parametre an'ilay fonction                                 
                                 ModelView view = null;
                                 try {
@@ -216,11 +208,21 @@ public class FrontServlet extends HttpServlet{
                                 }
                                 
                                 out.println("View = " + view.getView());
+                                //on ajout les attributs a envoyer vers JSP ici
                                 if(view.getData()!=null) {
                                     for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
                                         String key = entry.getKey();
                                         Object value = entry.getValue();
                                         request.setAttribute(key, value);
+                                    }
+                                }
+                                //on ajout les sessions
+                                if(view.getSession()!=null) {
+                                    HttpSession session = request.getSession();
+                                    for (Map.Entry<String, Object> entry : view.getSession().entrySet()) {
+                                        String key = entry.getKey();
+                                        Object value = entry.getValue();
+                                        session.setAttribute(key, value);
                                     }
                                 }
 
@@ -235,6 +237,23 @@ public class FrontServlet extends HttpServlet{
         catch(Exception io) {
             out.println("Erreur aki = " + io);
             io.printStackTrace();
+        }
+    }
+
+    //check si la methode a l'annotation Auth
+    public void checkMethod(Method method, HttpServletRequest request) throws Exception {
+        if(method.isAnnotationPresent(Auth.class)) {
+            String profil = method.getAnnotation(Auth.class).profil();
+            String auth_session = getServletContext().getInitParameter("auth_session");
+            String profil_session = getServletContext().getInitParameter("profil_session");
+            HttpSession session = request.getSession();
+            if(session.getAttribute(auth_session)==null || (Boolean)session.getAttribute(auth_session)==false) {
+                throw new Exception("Desole vous n'etes pas connecte");
+            }
+
+            if(profil.equals("")==false && session.getAttribute(profil_session)!=null && profil.equals((String)session.getAttribute(profil_session))==false) {
+                throw new Exception("Desole vous n'avez pas acces a cette methode");
+            }
         }
     }
 

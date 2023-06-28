@@ -7,6 +7,8 @@ import etu2068.annotations.Url;
 import etu2068.annotations.Singleton;
 import etu2068.modelView.ModelView;
 import etu2068.fileUpload.FileUpload;
+import etu2068.annotations.Argument;
+import etu2068.annotations.Auth;
 
 import java.util.List;
 import java.nio.file.Files;
@@ -128,9 +130,43 @@ public class Emp extends GeneriqueDAO{
         view.addItem("id", this.numero);
         view.addItem("nom", this.nom);
         view.addItem("prenom", this.prenom);
+        view.addSession("Rota", "Rota kelyy anh!!");
         System.out.println("numero = "+ this.numero);
         System.out.println("nom = "+ this.nom);
         System.out.println("prenom = "+ this.prenom);
+        return view;
+    }
+
+    @Url(name = "/login")
+    public ModelView login(@Argument(name = "e_mail") String e_mail, @Argument(name = "pwd") String pwd) throws Exception {
+        ModelView view = new ModelView("Login.jsp");
+        view.addItem("e-mail", e_mail);
+        view.addItem("pwd", pwd);
+        if(e_mail.equals("razafimanatsoarota@gmail.com") && pwd.equals("rota")) {
+            view.addSession("isConnected", true);
+            view.addSession("profil", "user");
+            view.setView("Acceuil.jsp");
+        }
+        else if(e_mail.equals("admin@gmail.com") && pwd.equals("admin")) {
+            view.addSession("isConnected", true);
+            view.addSession("profil", "admin");
+            view.setView("Acceuil.jsp");
+        }
+        else {
+            view.addSession("isConnected", false);
+            System.out.println("Erreurrrr");
+        }
+        System.out.println("e-mail = "+ e_mail);
+        System.out.println("pwd = "+ pwd);
+        return view;
+    }
+
+    @Auth(profil = "admin")
+    @Url(name = "/test_auth")
+    public ModelView test_auth() throws Exception {
+        ModelView view = new ModelView("Test.jsp");
+        view.addItem("nom", "Rota");
+        view.addSession("Rota", "Rota be an!!!");
         return view;
     }
 

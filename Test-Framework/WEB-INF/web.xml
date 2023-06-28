@@ -20,11 +20,25 @@
   <!-- Remplacez models par le nom de votre package ou on prend tous les models que vous aviez creer et ne touche a rien SVP! -->
       <param-value>models</param-value> 
     </context-param>
+
     <context-param>
       <param-name>reinitialiser</param-name>
   <!-- Remplacez reinitialiser par le nom de votre fonction qui fait la reinitialisation des attributs dans les class singletons que vous aviez creer et ne touche a rien SVP! -->
       <param-value>reinitialiser</param-value> 
     </context-param>
+
+    <context-param>
+      <param-name>auth_session</param-name>
+  <!-- Remplacez isConnected par le nom du session que vous voulez utiliser pour connaitre si l'utilisateur est connecte, elle retourne true ou false et ne touche a rien SVP! -->
+      <param-value>isConnected</param-value> 
+    </context-param>
+
+    <context-param>
+      <param-name>profil_session</param-name>
+  <!-- Remplacez profil par le nom du session que vous voulez utiliser pour connaitre le profil de l'utilisateur, elle retourne true ou false et ne touche a rien SVP! -->
+      <param-value>profil</param-value> 
+    </context-param>
+
     <multipart-config>
         <max-file-size>5242880</max-file-size> <!-- Taille maximale du fichier (en octets) -->
         <max-request-size>20971520</max-request-size> <!-- Taille maximale totale de la requête (en octets) -->
