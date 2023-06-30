@@ -232,23 +232,18 @@ public class FrontServlet extends HttpServlet{
                                     }
                                     
                                     out.println("View = " + view.getView());
+
+                                    //supprime les sessions demander
+                                    this.removeSession(view, request);
+
                                     //on ajout les sessions
                                     if(view.getSession()!=null) {
-                                        HttpSession session = request.getSession();
-                                        for (Map.Entry<String, Object> entry : view.getSession().entrySet()) {
-                                            String key = entry.getKey();
-                                            Object value = entry.getValue();
-                                            session.setAttribute(key, value);
-                                        }
+                                        this.addSession(view, request);
                                     }
     
                                     //on ajout les attributs a envoyer vers JSP ici
                                     if(view.getData()!=null) {
-                                        for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
-                                            String key = entry.getKey();
-                                            Object value = entry.getValue();
-                                            request.setAttribute(key, value);
-                                        }
+                                        this.setAttribute(view, request);
                                     }
     
                                     //test si c'est un JSON
@@ -277,6 +272,38 @@ public class FrontServlet extends HttpServlet{
         }
     }
 
+    //ajout de donnees dans l'Attribute du servlet
+    public void setAttribute(ModelView view, HttpServletRequest request) {
+        for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            request.setAttribute(key, value);
+        }
+    }
+
+    //ajout de nouveau session dans la session
+    public void addSession(ModelView view, HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        for (Map.Entry<String, Object> entry : view.getSession().entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            session.setAttribute(key, value);
+        }
+    }
+
+    //supprime les sessions demander
+    public void removeSession(ModelView view, HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        if(view.isInvalidateSession()) {
+            session.invalidate();
+        }
+        else {
+            for(String key : view.getRemoveSession()){
+                session.removeAttribute(key);
+            }
+        }
+    }
+
     //check si la methode a l'annotation Auth
     public void checkMethod(Method method, HttpServletRequest request) throws Exception {
         if(method.isAnnotationPresent(Auth.class)) {
@@ -296,6 +323,7 @@ public class FrontServlet extends HttpServlet{
 
     public void checkSession(Object object, Method method, HttpServletRequest request) throws Exception {
         if(method.isAnnotationPresent(Session.class)) {
+            System.out.println("manontany izyy??");
             String attribut = "session";
             String[] sessions = method.getAnnotation(Session.class).sessions();
             Class<?> class1 = object.getClass();
@@ -306,6 +334,7 @@ public class FrontServlet extends HttpServlet{
             Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
             HttpSession session = request.getSession();
             Map<String, Object> sessionAttributes = new HashMap<>();
+            
             if(sessions.length == 0) {
                 Enumeration<String> attributeNames = session.getAttributeNames();
                 while (attributeNames.hasMoreElements()) {
@@ -321,7 +350,6 @@ public class FrontServlet extends HttpServlet{
             }
 
             setter.invoke(object, sessionAttributes); 
-            
         }
     }
 

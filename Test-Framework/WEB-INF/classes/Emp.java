@@ -39,7 +39,9 @@ public class Emp extends GeneriqueDAO{
     FileUpload fichier;
     HashMap<String, Object> session;
 
-    public Emp() {}
+    public Emp() {
+        this.session = new HashMap<String, Object>();
+    }
     
     public Emp(String nom, String prenom, int numero) {
         this.setNom(nom);
@@ -113,6 +115,7 @@ public class Emp extends GeneriqueDAO{
         this.prenom = "";
         this.numero = -1;
         this.fichier = null;
+        this.session = null;
     }
 
     @Url(name = "/save")
@@ -185,15 +188,18 @@ public class Emp extends GeneriqueDAO{
         return view;
     }
 
-    @Session(sessions = {"isConnected", "profil", "too"})
+    // @Session(sessions = {"isConnected", "profil", "too"})
+    @Session
     @Url(name = "/listeSession")
     public ModelView listeSession() throws Exception {
         ModelView view = new ModelView("TestSession.jsp");
+        System.out.println("liste des sessions exist");
         for (String key : this.getSession().keySet()) {
             Object value = this.getSession().get(key);
             view.addItem(key, value);
             System.out.println(key + " : " + value);
         }
+        System.out.println("-------------------------------------------------------------------");
         return view;
     }
 
@@ -211,11 +217,21 @@ public class Emp extends GeneriqueDAO{
     @Url(name = "/test_restAPI")
     public ModelView test_restAPI() throws Exception {
         ModelView view = new ModelView("TestSession.jsp");
-        view.setJson(true);
         view.addItem("Rota", "ETU-2068");
         view.addItem("Layah", "ETU-1972");
         view.addItem("Haingo", "ETU-2069");
         return view;
     }
+
+    @Url(name = "/suprimerSession")
+    public ModelView suprimerSession() throws Exception {
+        ModelView view = new ModelView("TestSession.jsp");
+        // view.addRemoveSession("Haingo");
+        // view.addRemoveSession("Layah");
+        view.setInvalidateSession(true);
+        return view;
+    }
+
+
 
 }

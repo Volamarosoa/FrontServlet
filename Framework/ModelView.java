@@ -1,13 +1,15 @@
 package etu2068.modelView;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ModelView {
     String view;
     boolean isJson;
+    boolean invalidateSession ;
     HashMap<String, Object> data;
     HashMap<String, Object> session;
-    
-    
+    List<String> removeSession;    
     
     public ModelView() {
         this.setData(new HashMap<String,Object>());
@@ -17,6 +19,7 @@ public class ModelView {
         this.setView(view);
         this.setData(new HashMap<String,Object>());
         this.setSession(new HashMap<String,Object>());
+        this.setRemoveSession(new ArrayList<String>());
     }
     
     public String getView() {
@@ -57,6 +60,26 @@ public class ModelView {
     
     public void setJson(boolean isJson) {
         this.isJson = isJson;
+    }
+
+    public List<String> getRemoveSession() {
+        return this.removeSession;
+    }
+
+    public void setRemoveSession(List<String> removeSession) {
+        this.removeSession = removeSession;
+    }
+    
+    public boolean isInvalidateSession() {
+        return this.invalidateSession;
+    }
+
+    public void setInvalidateSession(boolean invalidateSession) {
+        this.invalidateSession = invalidateSession;
+    }
+
+    public void addRemoveSession(String nom) {
+        this.getRemoveSession().add(nom);
     }
 
 }
