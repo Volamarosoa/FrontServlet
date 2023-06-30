@@ -10,6 +10,7 @@ import etu2068.fileUpload.FileUpload;
 import etu2068.annotations.Argument;
 import etu2068.annotations.Auth;
 import etu2068.annotations.Session;
+import etu2068.annotations.restAPI;
 
 import java.util.List;
 import java.util.HashMap;
@@ -198,6 +199,17 @@ public class Emp extends GeneriqueDAO{
 
     @Url(name = "/test-json")
     public ModelView test_json() throws Exception {
+        ModelView view = new ModelView("TestSession.jsp");
+        view.setJson(true);
+        view.addItem("Rota", "ETU-2068");
+        view.addItem("Layah", "ETU-1972");
+        view.addItem("Haingo", "ETU-2069");
+        return view;
+    }
+
+    @restAPI
+    @Url(name = "/test_restAPI")
+    public ModelView test_restAPI() throws Exception {
         ModelView view = new ModelView("TestSession.jsp");
         view.setJson(true);
         view.addItem("Rota", "ETU-2068");

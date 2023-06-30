@@ -7,7 +7,8 @@ import etu2068.annotations.Argument;
 import etu2068.annotations.Singleton;
 import etu2068.annotations.Auth;
 import etu2068.annotations.Session;
-import etu2068.modelView.ModelView;
+import etu2068.annotations.restAPI;
+import etu2068.modelView.ModelView; 
 
 import java.io.*;
 import java.lang.Thread;
@@ -200,55 +201,69 @@ public class FrontServlet extends HttpServlet{
                                 this.checkSession(object, method, request);
 
                                 Object[] argument = this.mamenoParametreMethode(method, params);    //mameno parametre an'ilay fonction                                 
-                                ModelView view = null;
-                                try {
-                                if(argument != null){
-                                    view = (ModelView)method.invoke(object, argument);
-                                }
-                                else{
-                                    view = (ModelView)method.invoke(object);
-                                }
-                                // Code où l'exception InvocationTargetException se produit
-                                } catch (InvocationTargetException e) {
-                                    Throwable cause = e.getCause();
-                                    if (cause != null) {
-                                        // Gérez ou affichez l'exception réelle
-                                        cause.printStackTrace();
-                                    }
-                                }
-                                
-                                out.println("View = " + view.getView());
-                                //on ajout les sessions
-                                if(view.getSession()!=null) {
-                                    HttpSession session = request.getSession();
-                                    for (Map.Entry<String, Object> entry : view.getSession().entrySet()) {
-                                        String key = entry.getKey();
-                                        Object value = entry.getValue();
-                                        session.setAttribute(key, value);
-                                    }
-                                }
 
-                                //on ajout les attributs a envoyer vers JSP ici
-                                if(view.getData()!=null) {
-                                    for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
-                                        String key = entry.getKey();
-                                        Object value = entry.getValue();
-                                        request.setAttribute(key, value);
+                                if(method.isAnnotationPresent(restAPI.class)) {
+                                    Object json = null;
+                                    if(argument != null){
+                                        json = method.invoke(object, argument);
                                     }
-                                }
-
-                                //test si c'est un JSON
-                                if(view.isJson()) {
-                                    System.out.println("true");
-                                    Gson gson = new Gson();
-                                    String json = gson.toJson(view.getData());
-                                    out.println(json);
-                                    System.out.println(json);
+                                    else{
+                                        json = method.invoke(object);
+                                    }
+                                    String json_tab = new Gson().toJson(json);
+                                    out.println(json_tab);
                                 }
                                 else {
-                                    RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
-                                    dispatcher.forward(request, response);
+                                    ModelView view = null;
+                                    try {
+                                        if(argument != null){
+                                            view = (ModelView)method.invoke(object, argument);
+                                        }
+                                        else{
+                                            view = (ModelView)method.invoke(object);
+                                        }
+                                    // Code où l'exception InvocationTargetException se produit
+                                    } catch (InvocationTargetException e) {
+                                        Throwable cause = e.getCause();
+                                        if (cause != null) {
+                                            // Gérez ou affichez l'exception réelle
+                                            cause.printStackTrace();
+                                        }
+                                    }
+                                    
+                                    out.println("View = " + view.getView());
+                                    //on ajout les sessions
+                                    if(view.getSession()!=null) {
+                                        HttpSession session = request.getSession();
+                                        for (Map.Entry<String, Object> entry : view.getSession().entrySet()) {
+                                            String key = entry.getKey();
+                                            Object value = entry.getValue();
+                                            session.setAttribute(key, value);
+                                        }
+                                    }
+    
+                                    //on ajout les attributs a envoyer vers JSP ici
+                                    if(view.getData()!=null) {
+                                        for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
+                                            String key = entry.getKey();
+                                            Object value = entry.getValue();
+                                            request.setAttribute(key, value);
+                                        }
+                                    }
+    
+                                    //test si c'est un JSON
+                                    if(view.isJson()) {
+                                        System.out.println("true");
+                                        String json = new Gson().toJson(view.getData());
+                                        out.println(json);
+                                        System.out.println(json);
+                                    }
+                                    else {
+                                        RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
+                                        dispatcher.forward(request, response);
+                                    }
                                 }
+
 
                             }
                         }
