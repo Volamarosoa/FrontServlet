@@ -6,6 +6,7 @@ import etu2068.annotations.Url;
 import etu2068.annotations.Argument;
 import etu2068.annotations.Singleton;
 import etu2068.annotations.Auth;
+import etu2068.annotations.Session;
 import etu2068.modelView.ModelView;
 
 import java.io.*;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.Enumeration;
 import java.lang.reflect.Field;
 import java.sql.Date;
 import java.sql.Time;
@@ -164,6 +166,7 @@ public class FrontServlet extends HttpServlet{
                     if(class1.getSimpleName().equals(mapping1.getClassName())) {
                         out.println(class1.getSimpleName());
                         Object object = null;
+                        //mijery hoe singleton ve le class natsoina sa tsia
                         if(this.getInstances().containsKey(class1.getSimpleName())) {
                             object = this.getInstances().get(class1.getSimpleName());
                             if(object == null) {
@@ -177,17 +180,22 @@ public class FrontServlet extends HttpServlet{
                         else{
                             object = class1.newInstance();
                         }
+
                         Map<String, String[]> params = request.getParameterMap();
                         if (contentType != null && contentType.startsWith("multipart/")) {
                             this.makaParametreDonneesAvecFichier(object, request, class1, out); //maka an'ilay parametre setters any jsp fa avec setters
                         } else {
                             object = this.makaParametreDonnees(object, params, class1); //maka an'ilay parametre setters any jsp
                         }
+
                         Method[] methods = class1.getDeclaredMethods();
                         for (Method method : methods) {
                             if(method.getName().equals(mapping1.getMethod())) {
                                 //test si le methode a l'annotation Auth
                                 this.checkMethod(method, request);
+
+                                //get tous les sessions demander par la methode
+                                this.checkSession(object, method, request);
 
                                 Object[] argument = this.mamenoParametreMethode(method, params);    //mameno parametre an'ilay fonction                                 
                                 ModelView view = null;
@@ -254,6 +262,37 @@ public class FrontServlet extends HttpServlet{
             if(profil.equals("")==false && session.getAttribute(profil_session)!=null && profil.equals((String)session.getAttribute(profil_session))==false) {
                 throw new Exception("Desole vous n'avez pas acces a cette methode");
             }
+        }
+    }
+
+    public void checkSession(Object object, Method method, HttpServletRequest request) throws Exception {
+        if(method.isAnnotationPresent(Session.class)) {
+            String attribut = "session";
+            String[] sessions = method.getAnnotation(Session.class).sessions();
+            Class<?> class1 = object.getClass();
+            Field champ = class1.getDeclaredField(attribut);
+            if(champ == null)
+                throw new Exception("Verifier votre class mais vous n'aviez pas encore l'attribut session.\n Veuillez ajouter une attribut session dans votre class.");
+            String nomMethode =  "set" + this.changeFirstAName(attribut);
+            Method setter = class1.getDeclaredMethod(nomMethode, champ.getType());
+            HttpSession session = request.getSession();
+            Map<String, Object> sessionAttributes = new HashMap<>();
+            if(sessions.length == 0) {
+                Enumeration<String> attributeNames = session.getAttributeNames();
+                while (attributeNames.hasMoreElements()) {
+                    String attributeName = attributeNames.nextElement();
+                    Object attributeValue = session.getAttribute(attributeName);
+                    sessionAttributes.put(attributeName, attributeValue);
+                }
+            }
+            else {
+                for(String nom : sessions) {
+                    sessionAttributes.put(nom, session.getAttribute(nom));
+                }
+            }
+
+            setter.invoke(object, sessionAttributes); 
+            
         }
     }
 

@@ -9,8 +9,10 @@ import etu2068.modelView.ModelView;
 import etu2068.fileUpload.FileUpload;
 import etu2068.annotations.Argument;
 import etu2068.annotations.Auth;
+import etu2068.annotations.Session;
 
 import java.util.List;
+import java.util.HashMap;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+
 
 
 @Singleton
@@ -33,8 +36,8 @@ public class Emp extends GeneriqueDAO{
     @Colonne
     int numero = -1;
     FileUpload fichier;
-    
-    
+    HashMap<String, Object> session;
+
     public Emp() {}
     
     public Emp(String nom, String prenom, int numero) {
@@ -93,6 +96,14 @@ public class Emp extends GeneriqueDAO{
 
     public void setFichier(byte[] fichier) {
         this.fichier = new FileUpload(fichier);
+    }
+
+    public HashMap<String, Object> getSession() {
+        return this.session;
+    }
+
+    public void setSession(HashMap<String, Object> session) {
+        this.session = session;
     }
 
     public void reinitialiser() throws Exception {
@@ -158,6 +169,7 @@ public class Emp extends GeneriqueDAO{
         }
         System.out.println("e-mail = "+ e_mail);
         System.out.println("pwd = "+ pwd);
+        System.out.println("----------------------------------------------------------");
         return view;
     }
 
@@ -166,7 +178,21 @@ public class Emp extends GeneriqueDAO{
     public ModelView test_auth() throws Exception {
         ModelView view = new ModelView("Test.jsp");
         view.addItem("nom", "Rota");
-        view.addSession("Rota", "Rota be an!!!");
+        view.addSession("Rota", "ETU-2068");
+        view.addSession("Layah", "ETU-1972");
+        view.addSession("Haingo", "ETU-2069");
+        return view;
+    }
+
+    @Session(sessions = {"isConnected", "profil", "too"})
+    @Url(name = "/listeSession")
+    public ModelView listeSession() throws Exception {
+        ModelView view = new ModelView("TestSession.jsp");
+        for (String key : this.getSession().keySet()) {
+            Object value = this.getSession().get(key);
+            view.addItem(key, value);
+            System.out.println(key + " : " + value);
+        }
         return view;
     }
 

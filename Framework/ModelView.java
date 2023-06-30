@@ -1,5 +1,6 @@
 package etu2068.modelView;
 import java.util.HashMap;
+
 public class ModelView {
     String view;
     HashMap<String, Object> data;
