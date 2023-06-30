@@ -39,12 +39,14 @@ import java.util.List;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 
-import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.*;
 import java.nio.charset.StandardCharsets;
 import java.lang.reflect.InvocationTargetException;
 
+import com.google.gson.Gson;
 
-@MultipartConfig
+
+@MultipartConfig()
 public class FrontServlet extends HttpServlet{
     HashMap<String, Mapping> mappingUrls;
     Vector<Class<?>> listeClasse;
@@ -216,14 +218,6 @@ public class FrontServlet extends HttpServlet{
                                 }
                                 
                                 out.println("View = " + view.getView());
-                                //on ajout les attributs a envoyer vers JSP ici
-                                if(view.getData()!=null) {
-                                    for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
-                                        String key = entry.getKey();
-                                        Object value = entry.getValue();
-                                        request.setAttribute(key, value);
-                                    }
-                                }
                                 //on ajout les sessions
                                 if(view.getSession()!=null) {
                                     HttpSession session = request.getSession();
@@ -234,8 +228,28 @@ public class FrontServlet extends HttpServlet{
                                     }
                                 }
 
-                                RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
-                                dispatcher.forward(request, response);
+                                //on ajout les attributs a envoyer vers JSP ici
+                                if(view.getData()!=null) {
+                                    for (Map.Entry<String, Object> entry : view.getData().entrySet()) {
+                                        String key = entry.getKey();
+                                        Object value = entry.getValue();
+                                        request.setAttribute(key, value);
+                                    }
+                                }
+
+                                //test si c'est un JSON
+                                if(view.isJson()) {
+                                    System.out.println("true");
+                                    Gson gson = new Gson();
+                                    String json = gson.toJson(view.getData());
+                                    out.println(json);
+                                    System.out.println(json);
+                                }
+                                else {
+                                    RequestDispatcher dispatcher = request.getRequestDispatcher("/"+view.getView());
+                                    dispatcher.forward(request, response);
+                                }
+
                             }
                         }
                     }

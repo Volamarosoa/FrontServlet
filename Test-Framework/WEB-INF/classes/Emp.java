@@ -196,4 +196,14 @@ public class Emp extends GeneriqueDAO{
         return view;
     }
 
+    @Url(name = "/test-json")
+    public ModelView test_json() throws Exception {
+        ModelView view = new ModelView("TestSession.jsp");
+        view.setJson(true);
+        view.addItem("Rota", "ETU-2068");
+        view.addItem("Layah", "ETU-1972");
+        view.addItem("Haingo", "ETU-2069");
+        return view;
+    }
+
 }

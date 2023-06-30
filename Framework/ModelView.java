@@ -3,9 +3,10 @@ import java.util.HashMap;
 
 public class ModelView {
     String view;
+    boolean isJson;
     HashMap<String, Object> data;
     HashMap<String, Object> session;
-
+    
     
     
     public ModelView() {
@@ -29,7 +30,7 @@ public class ModelView {
     public HashMap<String, Object> getData() {
         return this.data;
     }
-
+    
     public void setData(HashMap<String, Object> data) {
         this.data = data;
     }
@@ -37,7 +38,7 @@ public class ModelView {
     public void addItem(String key, Object value) {
         this.getData().put(key, value);
     }
-
+    
     public HashMap<String, Object> getSession() {
         return this.session;
     }
@@ -45,8 +46,17 @@ public class ModelView {
     public void setSession(HashMap<String, Object> session) {
         this.session = session;
     }
-
+    
     public void addSession(String key, Object value) {
         this.getSession().put(key, value);
     }
+    
+    public boolean isJson() {
+        return this.isJson;
+    }
+    
+    public void setJson(boolean isJson) {
+        this.isJson = isJson;
+    }
+
 }
